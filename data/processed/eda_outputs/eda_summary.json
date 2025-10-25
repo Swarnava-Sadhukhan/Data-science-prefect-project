@@ -1,0 +1,18 @@
+{
+  "analysis_date": "2025-10-25T12:07:13.063410",
+  "dataset_shape": [
+    5634,
+    87
+  ],
+  "key_findings": {
+    "high_correlations": 61,
+    "strong_categorical_associations": 0,
+    "top_features_for_target": [
+      "Churn_Yes",
+      "Churn_No",
+      "Contract_frequency",
+      "is_month_to_month",
+      "Contract_Month-to-month"
+    ]
+  }
+}

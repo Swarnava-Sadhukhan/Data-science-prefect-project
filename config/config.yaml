@@ -1,0 +1,84 @@
+# Data Science Pipeline Configuration
+
+# Environment settings
+environment: development  # development, staging, production
+debug: true
+
+# Data processing configuration
+data:
+  input_path: "data/train/telco_customer_churn.csv"
+  raw_data_dir: "data"
+  processed_data_dir: "data/processed"
+  target_column: "Churn"
+  test_size: 0.3  # 70% training, 30% testing as per assignment
+  random_state: 42
+  
+  # Data preprocessing settings
+  drop_duplicates: true
+  missing_value_strategy: "simple"  # simple, knn, drop
+  numeric_imputation: "mean"  # mean, median, constant
+  categorical_imputation: "most_frequent"  # most_frequent, constant
+  scaling_method: "standard"  # standard, minmax, robust
+  encoding_strategy: "onehot"  # onehot, label
+  max_categories: 10
+
+# Machine learning configuration
+ml:
+  algorithms: ["random_forest", "logistic_regression"]  # Two algorithms as required
+  problem_type: "auto"  # auto, classification, regression
+  models_dir: "models"
+  cv_folds: 5
+  
+  # Hyperparameters for each algorithm
+  random_forest_params:
+    n_estimators: 100
+    max_depth: null
+    random_state: 42
+  
+  logistic_regression_params:
+    C: 1.0
+    random_state: 42
+    max_iter: 1000
+  
+  svm_params:
+    C: 1.0
+    kernel: "rbf"
+    random_state: 42
+
+# Prefect workflow configuration
+prefect:
+  schedule_interval_minutes: 2  # Schedule every 2 minutes as required
+  work_queue_name: "default"
+  log_level: "INFO"
+  logs_dir: "logs"
+  
+  # Pipeline enablement
+  enable_data_pipeline: true
+  enable_ml_pipeline: true
+  enable_monitoring: true
+
+# API configuration
+api:
+  host: "0.0.0.0"
+  port: 8000
+  reload: true
+  log_level: "info"
+  title: "Data Science Pipeline API"
+  version: "1.0.0"
+
+# Monitoring and logging configuration
+monitoring:
+  enable_logging: true
+  log_file: "logs/pipeline.log"
+  log_format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  log_rotation: true
+  max_log_size: "10MB"
+  backup_count: 5
+  
+  # Metrics and alerting
+  enable_metrics: true
+  metrics_file: "logs/metrics.json"
+  alert_thresholds:
+    accuracy_threshold: 0.8
+    pipeline_failure_rate: 0.2
+    data_quality_threshold: 0.9

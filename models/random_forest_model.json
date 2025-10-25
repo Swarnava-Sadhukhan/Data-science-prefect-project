@@ -1,0 +1,13 @@
+{
+  "evaluation_metrics": {
+    "accuracy": 0.85,
+    "precision": 0.83,
+    "recall": 0.87,
+    "f1_score": 0.85
+  },
+  "training_date": "2025-10-10T00:26:29.726431",
+  "problem_type": "classification",
+  "dataset_size": 7043,
+  "features_count": 19,
+  "model_type": "Random Forest"
+}

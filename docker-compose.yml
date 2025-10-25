@@ -1,0 +1,134 @@
+version: '3.8'
+
+services:
+  # Prefect Server
+  prefect-server:
+    image: prefecthq/prefect:2.14.10-python3.9
+    command: prefect server start --host 0.0.0.0
+    environment:
+      - PREFECT_SERVER_API_HOST=0.0.0.0
+      - PREFECT_API_URL=http://prefect-server:4200/api
+    ports:
+      - "4200:4200"
+    volumes:
+      - prefect_data:/root/.prefect
+    restart: unless-stopped
+    networks:
+      - data-science-network
+
+  # PostgreSQL Database for Prefect
+  prefect-db:
+    image: postgres:13
+    environment:
+      - POSTGRES_DB=prefect
+      - POSTGRES_USER=prefect
+      - POSTGRES_PASSWORD=prefect123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - data-science-network
+
+  # Data Science Application
+  data-science-app:
+    build: .
+    environment:
+      - ENVIRONMENT=production
+      - PREFECT_API_URL=http://prefect-server:4200/api
+      - DATABASE_URL=postgresql://prefect:prefect123@prefect-db:5432/prefect
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./logs:/app/logs
+      - ./config:/app/config
+    depends_on:
+      - prefect-server
+      - prefect-db
+    restart: unless-stopped
+    networks:
+      - data-science-network
+
+  # Prefect Worker
+  prefect-worker:
+    image: prefecthq/prefect:2.14.10-python3.9
+    command: prefect worker start --pool default-agent-pool
+    environment:
+      - PREFECT_API_URL=http://prefect-server:4200/api
+    volumes:
+      - ./src:/app/src
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./logs:/app/logs
+      - ./config:/app/config
+    depends_on:
+      - prefect-server
+    restart: unless-stopped
+    networks:
+      - data-science-network
+
+  # Redis for caching (optional)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - data-science-network
+
+  # Monitoring Dashboard (Grafana)
+  grafana:
+    image: grafana/grafana:latest
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./docker/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./docker/grafana/datasources:/etc/grafana/provisioning/datasources
+    restart: unless-stopped
+    networks:
+      - data-science-network
+
+  # Log aggregation (Elasticsearch)
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.8.0
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    restart: unless-stopped
+    networks:
+      - data-science-network
+
+  # Log visualization (Kibana)
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.8.0
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+    restart: unless-stopped
+    networks:
+      - data-science-network
+
+volumes:
+  prefect_data:
+  postgres_data:
+  redis_data:
+  grafana_data:
+  elasticsearch_data:
+
+networks:
+  data-science-network:
+    driver: bridge
